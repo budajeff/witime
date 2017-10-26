@@ -18,9 +18,18 @@ namespace WorkItemTime
         {
             SystemEvents.SessionSwitch -= SystemEventsOnSessionSwitch;
             SystemEvents.SessionSwitch += SystemEventsOnSessionSwitch;
+
+			SystemEvents.SessionEnded -= SystemEventsOnSessionEnded;
+	        SystemEvents.SessionEnded += SystemEventsOnSessionEnded;
         }
 
-        public void Log(string description)
+		private void SystemEventsOnSessionEnded(object sender, SessionEndedEventArgs sessionEndedEventArgs)
+		{
+			var description = Enum.GetName(typeof(SessionSwitchReason), sessionEndedEventArgs.Reason);
+			this.Log(description);
+		}
+
+		public void Log(string description)
         {
             var row = this._activityTable.NewRow();
             row.SetField(Data.ActivityDateTime, DateTime.Now);
@@ -32,12 +41,9 @@ namespace WorkItemTime
 
         private void SystemEventsOnSessionSwitch(object sender, SessionSwitchEventArgs sessionSwitchEventArgs)
 		{
-            var row = this._activityTable.NewRow();
-            row.SetField(Data.ActivityDateTime, DateTime.Now);
-            row.SetField(Data.ActivityDescription, Enum.GetName(typeof(SessionSwitchReason), sessionSwitchEventArgs.Reason));
-            row.SetField(Data.ActivityStatus, Data.ActivityStatusUnapproved);
-            this._activityTable.Rows.Add(row);
-        }
+			var description = Enum.GetName(typeof(SessionSwitchReason), sessionSwitchEventArgs.Reason);
+			this.Log(description);
+		}
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
