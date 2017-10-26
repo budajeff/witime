@@ -20,6 +20,16 @@ namespace WorkItemTime
             SystemEvents.SessionSwitch += SystemEventsOnSessionSwitch;
         }
 
+        public void Log(string description)
+        {
+            var row = this._activityTable.NewRow();
+            row.SetField(Data.ActivityDateTime, DateTime.Now);
+            row.SetField(Data.ActivityDescription, description);
+            row.SetField(Data.ActivityStatus, Data.ActivityStatusUnapproved);
+            this._activityTable.Rows.Add(row);
+   
+        }
+
         private void SystemEventsOnSessionSwitch(object sender, SessionSwitchEventArgs sessionSwitchEventArgs)
 		{
             var row = this._activityTable.NewRow();
@@ -99,6 +109,11 @@ namespace WorkItemTime
             {             
                 this.UberSet = this.CreateDataSet();
             }
+        }
+
+        public void Save()
+        {
+            this.UberSet.WriteXml("settings.xml");
         }
 
 		public DataSet CreateDataSet()

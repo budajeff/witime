@@ -26,7 +26,14 @@ namespace WorkItemTime
             this._activityGrid.DataSource = activityBinding;
 
             _monitor = new Monitor(_data.UberSet);
+            _monitor.Log(Application.ProductName + " started");
             this._monitor.Start();
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            this._monitor.Log(Application.ProductName + " closing");
+            this._data.Save();
         }
     }
 }

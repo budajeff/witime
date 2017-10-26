@@ -98,6 +98,7 @@
             this.Controls.Add(this._tabControl);
             this.Name = "MainForm";
             this.Text = "TFS Work Item Time Tracker";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this._tabControl.ResumeLayout(false);
             this._activityTab.ResumeLayout(false);
