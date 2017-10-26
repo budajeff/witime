@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Win32;
 
 namespace WorkItemTime
 {
-	public class Monitor : IDisposable
+    public class Monitor : IDisposable
 	{
         readonly DataSet _uberSet;
         readonly DataTable _activityTable;
@@ -29,7 +24,7 @@ namespace WorkItemTime
 		{
             var row = this._activityTable.NewRow();
             row.SetField(Data.ActivityDateTime, DateTime.Now);
-            row.SetField(Data.ActivityDescription, Enum.GetName(typeof(SessionSwitchEventArgs), sessionSwitchEventArgs.Reason));
+            row.SetField(Data.ActivityDescription, Enum.GetName(typeof(SessionSwitchReason), sessionSwitchEventArgs.Reason));
             row.SetField(Data.ActivityStatus, Data.ActivityStatusUnapproved);
             this._activityTable.Rows.Add(row);
         }
@@ -74,6 +69,8 @@ namespace WorkItemTime
 
 	public class Data
 	{
+        public DataSet UberSet { get; private set; }
+
         public const string SettingsTableName = "settings";
         public const string SettingsTableKey = "key";
         public const string SettingsTableValue = "value";
@@ -88,11 +85,28 @@ namespace WorkItemTime
         public const string ActivityStatus = "status";
         public const string ActivityStatusUnapproved = "unapproved";
 
+        public const string LogTableName = "log";
+        public const string LogMessage = "message";
+
+        public void Load()
+        {
+            this.UberSet = new DataSet();
+            try
+            {
+                this.UberSet.ReadXml("settings.xml");
+            }
+            catch(Exception ex)
+            {             
+                this.UberSet = this.CreateDataSet();
+            }
+        }
+
 		public DataSet CreateDataSet()
 		{
 			var dataSet = new DataSet();
 			var activityTable = dataSet.Tables.Add(ActivityTableName);
 			activityTable.Columns.Add(ActivityDateTime, typeof(DateTime));
+            activityTable.Columns.Add(ActivityDescription, typeof(string));
 			activityTable.Columns.Add(ActivityStatus, typeof(string));//approved, posting, posted
 
 			var settingsTable = dataSet.Tables.Add(SettingsTableName);
@@ -105,11 +119,6 @@ namespace WorkItemTime
 			settingsTable.Rows.Add(SettingsTfsWorkHoursFieldName, "Actual Work", "TFS WI field name to increment");
 
 			return dataSet;
-		}
-
-		public void LoadOrCreate()
-		{
-			
 		}
 	}
 
