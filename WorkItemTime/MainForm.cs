@@ -25,6 +25,7 @@ namespace WorkItemTime
             var activityBinding = new BindingSource();
             activityBinding.DataSource = this._data.UberSet.Tables[Data.ActivityTableName];
             this._activityGrid.DataSource = activityBinding;
+			this._activityGrid.CellEndEdit += ActivityGridOnCellEndEdit;
 
 
 	        var dateColumn = this._activityGrid.Columns[Data.ActivityDateTime];
@@ -36,7 +37,12 @@ namespace WorkItemTime
             this._monitor.Start();
         }
 
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+		private void ActivityGridOnCellEndEdit(object sender, DataGridViewCellEventArgs dataGridViewCellEventArgs)
+		{
+			
+		}
+
+		private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             this._monitor.Log(Application.ProductName + " closing", Data.ActivityKindStop);
             this._data.Save();
