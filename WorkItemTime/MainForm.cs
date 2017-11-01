@@ -32,6 +32,10 @@ namespace WorkItemTime
 	        dateColumn.DefaultCellStyle.Format = "g";
 	        this._activityGrid.Sort(dateColumn, ListSortDirection.Descending);
 
+            var tfsBinding = new BindingSource();
+            tfsBinding.DataSource = this._data.UberSet.Tables[Data.TfsEditsTableName];
+            this._tfsEditsGrid.DataSource = tfsBinding;
+
             _monitor = new Monitor(_data.UberSet);
             _monitor.Log(Application.ProductName + " started", Data.ActivityKindStart);
             this._monitor.Start();
@@ -39,7 +43,8 @@ namespace WorkItemTime
 
 		private void ActivityGridOnCellEndEdit(object sender, DataGridViewCellEventArgs dataGridViewCellEventArgs)
 		{
-			
+            this._data.UberSet.Tables[Data.TfsEditsTableName].Rows.Clear();
+            this._data.CalculateDurations(this._data.UberSet);
 		}
 
 		private void MainForm_FormClosing(object sender, FormClosingEventArgs e)

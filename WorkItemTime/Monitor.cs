@@ -153,8 +153,9 @@ namespace WorkItemTime
 			activityTable.Columns.Add(ActivityKind, typeof(string));
 			activityTable.Columns.Add(ActivityComment, typeof(string));
 			activityTable.Columns.Add(ActivityStatus, typeof(string));//approved, posting, posted
-			activityTable.Columns.Add(ActivityWorkItem, typeof(Int32));
-
+			var wi = activityTable.Columns.Add(ActivityWorkItem, typeof(Int32));
+            wi.AllowDBNull = true;
+            
 			var settingsTable = dataSet.Tables.Add(SettingsTableName);
 			settingsTable.Columns.Add(SettingsTableKey, typeof(string));
 			settingsTable.Columns.Add(SettingsTableValue, typeof(string)); 
@@ -165,7 +166,9 @@ namespace WorkItemTime
 			settingsTable.Rows.Add(SettingsTfsWorkHoursFieldName, "Actual Work", "TFS WI field name to increment");
 
 			var tfsEditsTable = dataSet.Tables.Add(TfsEditsTableName);
-			tfsEditsTable.PrimaryKey = new[] { tfsEditsTable.Columns.Add(TfsEditsWorkItem)};
+            wi = tfsEditsTable.Columns.Add(TfsEditsWorkItem, typeof(Int32));
+            wi.AllowDBNull = true;
+            //tfsEditsTable.PrimaryKey = new[] { tfsEditsTable.Columns.Add(TfsEditsWorkItem)};
 			tfsEditsTable.Columns.Add(TfsEditsDuration);
 			tfsEditsTable.Columns.Add(TfsEditsComment);
 
@@ -182,7 +185,6 @@ namespace WorkItemTime
 			DateTime? currentDateTimeStart = null;
 
 			DataRow tfsEdit = null;
-			tfsEdit.SetField(Data.TfsEditsDuration, 0);
 
 			foreach (DataRow currentActivity in activityTable.Rows.OfType<DataRow>().OrderBy(row=>row.Field<DateTime>(Data.ActivityDateTime)))
 			{
@@ -196,25 +198,46 @@ namespace WorkItemTime
 					previousActivity = currentActivity;
 					continue;
 				}
-				if (currentActivity.Field<string>(Data.ActivityKind) == ActivityKindStart 
-					&& previousActivity.Field<string>(Data.ActivityKind) == ActivityKindStop)
-				{
-					if (currentActivity.Field<Int32?>(Data.ActivityWorkItem).HasValue)
-						//see if we have already encountered this WI
-						tfsEdit = tfsEditsTable.Rows.Find(currentActivity.Field<Int32?>(Data.ActivityWorkItem).Value);
-				}
-				else if (currentActivity.Field<string>(Data.ActivityKind) == ActivityKindStop 
-					&& previousActivity.Field<string>(Data.ActivityKind) == ActivityKindStart)
-				{
-					//accumulate the time
-					var duration = previousActivity.Field<DateTime>(Data.ActivityDateTime) -
-					              currentActivity.Field<DateTime>(Data.ActivityDateTime);
+                if (currentActivity.Field<string>(Data.ActivityKind) == ActivityKindStart
+                    && previousActivity.Field<string>(Data.ActivityKind) == ActivityKindStop)
+                {
+                    if (currentActivity.Field<Int32?>(Data.ActivityWorkItem).HasValue)
+                    {
+                        //see if we have already encountered this WI
+                        tfsEdit = tfsEditsTable.AsEnumerable()
+                            .FirstOrDefault(
+                            row =>
+                            {
+                                return
+                                row.Field<Int32?>(Data.ActivityWorkItem).HasValue
+                                && row.Field<Int32?>(Data.ActivityWorkItem).Value ==
+                                currentActivity.Field<Int32?>(Data.ActivityWorkItem).Value;
+                            });
 
-					tfsEdit.SetField(Data.TfsEditsDuration, duration.Minutes);
-					tfsEdit.SetField(Data.TfsEditsWorkItem, currentActivity.Field<Int32>(Data.ActivityWorkItem));
-					tfsEdit.SetField(Data.TfsEditsComment, currentActivity.Field<string>(Data.ActivityComment));
-					tfsEditsTable.Rows.Add(tfsEdit);
-				}
+                        if (tfsEdit == null)
+                        {
+                            //make the tfs row
+                            tfsEdit = tfsEditsTable.NewRow();
+                            tfsEdit.SetField(Data.TfsEditsDuration, 0);
+                        }
+                    }
+                }
+                else if (currentActivity.Field<string>(Data.ActivityKind) == ActivityKindStop
+                    && previousActivity.Field<string>(Data.ActivityKind) == ActivityKindStart)
+                {
+                    //accumulate the time
+                    var duration = currentActivity.Field<DateTime>(Data.ActivityDateTime)
+                        - previousActivity.Field<DateTime>(Data.ActivityDateTime);
+
+                    tfsEdit.SetField(Data.TfsEditsDuration, duration.Minutes);
+                    tfsEdit.SetField(Data.TfsEditsWorkItem, previousActivity.Field<Int32?>(Data.ActivityWorkItem));
+                    tfsEdit.SetField(Data.TfsEditsComment, currentActivity.Field<string>(Data.ActivityComment));
+
+                    if(tfsEditsTable.Rows.IndexOf(tfsEdit) == -1)
+                    {
+                        tfsEditsTable.Rows.Add(tfsEdit);
+                    }
+                }
 				previousActivity = currentActivity;
 			}
 		}
