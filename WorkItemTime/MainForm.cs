@@ -8,6 +8,7 @@ namespace WorkItemTime
 	{
         WorkItemTime.Data _data = new Data();
         WorkItemTime.Monitor _monitor;
+		private TfsApi _tfsApi;
 
         public MainForm()
 		{
@@ -39,6 +40,8 @@ namespace WorkItemTime
             _monitor = new Monitor(_data.UberSet);
             _monitor.Log(Application.ProductName + " started", Data.ActivityKindStart);
             this._monitor.Start();
+
+			this._tfsApi = new TfsApi(_data.UberSet);
         }
 
 		private void ActivityGridOnCellEndEdit(object sender, DataGridViewCellEventArgs dataGridViewCellEventArgs)
@@ -55,7 +58,7 @@ namespace WorkItemTime
 
 		private void _submitToTfsButton_Click(object sender, EventArgs e)
 		{
-
+			this._tfsApi.Send();
 		}
 
 		private void _toggleButton_Click(object sender, EventArgs e)

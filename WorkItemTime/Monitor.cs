@@ -139,7 +139,7 @@ namespace WorkItemTime
 
 		public const string TfsEditsTableName = "tfsEdits";
 		public const string TfsEditsWorkItem = ActivityWorkItem;
-		public const string TfsEditsDuration = "duration";
+		public const string TfsEditsDurationMinutes = "duration";
 		public const string TfsEditsComment = ActivityComment;
 		public const string TfsEditsApiOutput = "apiOutput";
 		public const string TfsEditsApiError = "apiError";
@@ -175,11 +175,12 @@ namespace WorkItemTime
             wi.AllowDBNull = true;
             
 			var settingsTable = dataSet.Tables.Add(SettingsTableName);
-			settingsTable.Columns.Add(SettingsTableKey, typeof(string));
+			var keyColumn = settingsTable.Columns.Add(SettingsTableKey, typeof(string));
 			settingsTable.Columns.Add(SettingsTableValue, typeof(string)); 
 			settingsTable.Columns.Add(SettingsTableComment, typeof(string));
+			settingsTable.PrimaryKey = new[] {keyColumn};
 
-			settingsTable.Rows.Add(SettingsTfptPathAndFileName, @"C:\Program Files (x86)\Microsoft Visual Studio 12.0\tfpt.exe", "the exe");
+			settingsTable.Rows.Add(SettingsTfptPathAndFileName, @"C:\Program Files (x86)\Microsoft Team Foundation Server 2013 Power Tools\tfpt.exe", "the exe");
 			settingsTable.Rows.Add(SettingsTfsCollectionName, "http://tfstta.int.thomson.com:8080/tfs/DefaultCollection", "the collection");
 			settingsTable.Rows.Add(SettingsTfsWorkHoursFieldName, "Actual Work", "TFS WI field name to increment");
 
@@ -187,8 +188,10 @@ namespace WorkItemTime
             wi = tfsEditsTable.Columns.Add(TfsEditsWorkItem, typeof(Int32));
             wi.AllowDBNull = true;
             //tfsEditsTable.PrimaryKey = new[] { tfsEditsTable.Columns.Add(TfsEditsWorkItem)};
-			tfsEditsTable.Columns.Add(TfsEditsDuration);
+			tfsEditsTable.Columns.Add(TfsEditsDurationMinutes, typeof(Int32));
 			tfsEditsTable.Columns.Add(TfsEditsComment);
+			tfsEditsTable.Columns.Add(TfsEditsApiOutput);
+			tfsEditsTable.Columns.Add(TfsEditsApiError);
 
 			return dataSet;
 		}
@@ -210,7 +213,7 @@ namespace WorkItemTime
 				{
 					//make the tfs row
 					tfsEdit = tfsEditsTable.NewRow();
-					tfsEdit.SetField(Data.TfsEditsDuration, 0);
+					tfsEdit.SetField(Data.TfsEditsDurationMinutes, 0);
 
 					//iterate to second row
 					previousActivity = currentActivity;
@@ -236,7 +239,7 @@ namespace WorkItemTime
                         {
                             //make the tfs row
                             tfsEdit = tfsEditsTable.NewRow();
-                            tfsEdit.SetField(Data.TfsEditsDuration, 0);
+                            tfsEdit.SetField(Data.TfsEditsDurationMinutes, 0);
                         }
                     }
                 }
@@ -247,7 +250,7 @@ namespace WorkItemTime
                     var duration = currentActivity.Field<DateTime>(Data.ActivityDateTime)
                         - previousActivity.Field<DateTime>(Data.ActivityDateTime);
 
-                    tfsEdit.SetField(Data.TfsEditsDuration, duration.Minutes);
+                    tfsEdit.SetField(Data.TfsEditsDurationMinutes, duration.Minutes);
                     tfsEdit.SetField(Data.TfsEditsWorkItem, previousActivity.Field<Int32?>(Data.ActivityWorkItem));
                     tfsEdit.SetField(Data.TfsEditsComment, currentActivity.Field<string>(Data.ActivityComment));
 

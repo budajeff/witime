@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace WorkItemTime
 {
@@ -21,49 +22,80 @@ namespace WorkItemTime
 
 		public void Send()
 		{
-
+			foreach (var tfsEdit in this._tfsEdits.AsEnumerable())
+			{
+				this.UpdatetWorkHours(tfsEdit);
+			}
 		}
 
-		public void IncrementWorkHours(DataRow tfsEditRow)
+		public void UpdatetWorkHours(DataRow tfsEditRow)
 		{
 			var tfptPathAndFileName = this._settings.Rows.Find(Data.SettingsTfptPathAndFileName).Field<string>(Data.SettingsTableValue);
 			var tfsCollectionName = this._settings.Rows.Find(Data.SettingsTfsCollectionName).Field<string>(Data.SettingsTableValue);
 			var workHoursFieldName = this._settings.Rows.Find(Data.SettingsTfsWorkHoursFieldName).Field<string>(Data.SettingsTableValue);
 			var workItemNumber = tfsEditRow.Field<Int32>(Data.TfsEditsWorkItem);
+			var durationMinutes = tfsEditRow.Field<Int32>(Data.TfsEditsDurationMinutes);
 
 			//read the current hours
 			var startInfo = new ProcessStartInfo();
 			startInfo.FileName = tfptPathAndFileName;
-			startInfo.Arguments = $"workitem /collection{tfsCollectionName} {workItemNumber} /fields:\"{workHoursFieldName}\" = {workHoursFieldName}";
+			startInfo.Arguments = $"workitem /collection:{tfsCollectionName} {workItemNumber}";
+			startInfo.UseShellExecute = false;
 			startInfo.RedirectStandardError = true;
 			startInfo.RedirectStandardOutput = true;
 			startInfo.RedirectStandardInput = false;
+			startInfo.CreateNoWindow = true;
 
-			using (var process = Process.Start(startInfo))
+			var standardOutput = new StringBuilder();
+			var standardError = new StringBuilder();
+
+			var tfsGetResult = "";
+			var error = "";
+			try
 			{
-				process.Start();
-				var output = process.StandardOutput.ReadToEnd();
-				var error = process.StandardError.ReadToEnd();
-				tfsEditRow.SetField(Data.TfsEditsApiOutput, output);
-				tfsEditRow.SetField(Data.TfsEditsApiError, error);
+				using (var process = Process.Start(startInfo))
+				{
+					tfsGetResult = process.StandardOutput.ReadToEnd();
+					standardOutput.AppendLine(tfsGetResult);
+					error = process.StandardError.ReadToEnd();
+					standardError.AppendLine(error);
+					process.WaitForExit();
+				}
+				if (!string.IsNullOrWhiteSpace(error))
+				{
+					return;
+				}
+				var fields = tfsGetResult.Split(new []{Environment.NewLine }, StringSplitOptions.None);
+				var workHoursField =
+					fields.Where(f => f.Trim().StartsWith(workHoursFieldName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault() ?? "0";
+				var workHours = workHoursField.Replace(workHoursFieldName + " = ", "").Trim();
+				var currentHours = Double.Parse(workHours);
+
+				currentHours += new TimeSpan(0,0, durationMinutes, 0).TotalHours;
+
+				//write the updated hours
+				startInfo = new ProcessStartInfo();
+				startInfo.UseShellExecute = false;
+				startInfo.FileName = tfptPathAndFileName;
+				startInfo.Arguments = $"workitem /update /collection:{tfsCollectionName} {workItemNumber} /fields:\"{workHoursFieldName} = {currentHours:F2}\"";
+				startInfo.RedirectStandardError = true;
+				startInfo.RedirectStandardOutput = true;
+				startInfo.RedirectStandardInput = false;
+				startInfo.CreateNoWindow = true;
+
+				using (var process = Process.Start(startInfo))
+				{
+					var output = process.StandardOutput.ReadToEnd();
+					error = process.StandardError.ReadToEnd();
+					tfsEditRow.SetField(Data.TfsEditsApiOutput, output);
+					tfsEditRow.SetField(Data.TfsEditsApiError, error);
+					process.WaitForExit();
+				}
 			}
-
-
-			//write the updated hours
-			startInfo = new ProcessStartInfo();
-			startInfo.FileName = tfptPathAndFileName;
-			startInfo.Arguments = $"workitem /update /collection{tfsCollectionName} {workItemNumber} /fields:\"{workHoursFieldName}\" = {workHoursFieldName}";
-			startInfo.RedirectStandardError = true;
-			startInfo.RedirectStandardOutput = true;
-			startInfo.RedirectStandardInput = false;
-
-			using (var process = Process.Start(startInfo))
+			finally
 			{
-				process.Start();
-				var output = process.StandardOutput.ReadToEnd();
-				var error = process.StandardError.ReadToEnd();
-				tfsEditRow.SetField(Data.TfsEditsApiOutput, output);
-				tfsEditRow.SetField(Data.TfsEditsApiError, error);
+				tfsEditRow.SetField(Data.TfsEditsApiOutput, standardOutput.ToString());
+				tfsEditRow.SetField(Data.TfsEditsApiError, standardError.ToString());
 			}
 		}
 
