@@ -39,6 +39,7 @@
 			this._submitToTfsButton = new System.Windows.Forms.Button();
 			this._settingsTab = new System.Windows.Forms.TabPage();
 			this._settingsGrid = new System.Windows.Forms.DataGridView();
+			this._toggleButton = new System.Windows.Forms.Button();
 			this._tabControl.SuspendLayout();
 			this._activityTab.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -100,6 +101,7 @@
 			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
 			this.tableLayoutPanel1.Controls.Add(this._activityGrid, 0, 0);
 			this.tableLayoutPanel1.Controls.Add(this._clearActivityLogs, 1, 1);
+			this.tableLayoutPanel1.Controls.Add(this._toggleButton, 0, 1);
 			this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
 			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -188,6 +190,16 @@
 			this._settingsGrid.Size = new System.Drawing.Size(836, 443);
 			this._settingsGrid.TabIndex = 0;
 			// 
+			// _toggleButton
+			// 
+			this._toggleButton.Location = new System.Drawing.Point(3, 195);
+			this._toggleButton.Name = "_toggleButton";
+			this._toggleButton.Size = new System.Drawing.Size(106, 23);
+			this._toggleButton.TabIndex = 3;
+			this._toggleButton.Text = "Start/Stop Current";
+			this._toggleButton.UseVisualStyleBackColor = true;
+			this._toggleButton.Click += new System.EventHandler(this._toggleButton_Click);
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -229,6 +241,7 @@
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
 		private System.Windows.Forms.DataGridView _activityGrid;
+		private System.Windows.Forms.Button _toggleButton;
 	}
 }
 

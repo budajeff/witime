@@ -41,7 +41,25 @@ namespace WorkItemTime
    
         }
 
-        private void SystemEventsOnSessionSwitch(object sender, SessionSwitchEventArgs sessionSwitchEventArgs)
+		public void ToggleCurrent()
+		{
+			var latestActivity = this._uberSet.Tables[Data.ActivityTableName]
+				.AsEnumerable()
+				.OrderByDescending(row => row.Field<DateTime>(Data.ActivityDateTime)).FirstOrDefault();
+			if (latestActivity != null)
+			{
+				if(latestActivity.Field<string>(Data.ActivityKind) == Data.ActivityKindStart)
+				{
+					this.Log("manual stop", Data.ActivityKindStop);
+				}
+				else
+				{
+					this.Log("manual start", Data.ActivityKindStart);
+				}
+			}
+		}
+
+		private void SystemEventsOnSessionSwitch(object sender, SessionSwitchEventArgs sessionSwitchEventArgs)
 		{
 			var description = Enum.GetName(typeof(SessionSwitchReason), sessionSwitchEventArgs.Reason);
 			if (sessionSwitchEventArgs.Reason == SessionSwitchReason.SessionLock ||
@@ -90,8 +108,6 @@ namespace WorkItemTime
             // GC.SuppressFinalize(this);
         }
         #endregion
-
-
     }
 
 	public class Data
@@ -302,44 +318,44 @@ namespace WorkItemTime
 	///// </remarks>
 	//public class TfsIntegration
 	//{
- //       readonly DataSet _uberSet;
- //       readonly DataTable _settings;
+	//       readonly DataSet _uberSet;
+	//       readonly DataTable _settings;
 	//	public TfsIntegration(DataSet uberSet)
 	//	{
- //           this._uberSet = uberSet;
- //           this._settings = uberSet.Tables[Data.SettingsTableName];
+	//           this._uberSet = uberSet;
+	//           this._settings = uberSet.Tables[Data.SettingsTableName];
 	//	}
 
- //       public ReadWorkHours()
- //       {
+	//       public ReadWorkHours()
+	//       {
 
- //       }
+	//       }
 
- //       public IncrementWorkHours(
- //           Int32 workItemNumber,
- //           Decimal incrementAmount)
- //       {
- //           var tfptPathAndFileName = this._settings.Rows.Find(Data.SettingsTfptPathAndFileName).Field<string>(Data.SettingsTableValue);
- //           var tfsCollectionName = this._settings.Rows.Find(Data.SettingsTfsCollectionName).Field<string>(Data.SettingsTableValue);
- //           var workHoursFieldName = this._settings.Rows.Find(Data.SettingsTfsWorkHoursFieldName).Field<string>(Data.SettingsTableValue);
- //           return this.PerformTfsOperation($"workitem {operation} /collection{tfsCollectionName} {workItemNumber} /fields:\"{workHoursFieldName}\" = {workHoursFieldName}");
+	//       public IncrementWorkHours(
+	//           Int32 workItemNumber,
+	//           Decimal incrementAmount)
+	//       {
+	//           var tfptPathAndFileName = this._settings.Rows.Find(Data.SettingsTfptPathAndFileName).Field<string>(Data.SettingsTableValue);
+	//           var tfsCollectionName = this._settings.Rows.Find(Data.SettingsTfsCollectionName).Field<string>(Data.SettingsTableValue);
+	//           var workHoursFieldName = this._settings.Rows.Find(Data.SettingsTfsWorkHoursFieldName).Field<string>(Data.SettingsTableValue);
+	//           return this.PerformTfsOperation($"workitem {operation} /collection{tfsCollectionName} {workItemNumber} /fields:\"{workHoursFieldName}\" = {workHoursFieldName}");
 
- //           var startInfo = new ProcessStartInfo();
- //           startInfo.FileName = tfptPathAndFileName;
- //           startInfo.Arguments = arguments;
- //           startInfo.RedirectStandardError = true;
- //           startInfo.RedirectStandardOutput = true;
- //           startInfo.RedirectStandardInput = false;
+	//           var startInfo = new ProcessStartInfo();
+	//           startInfo.FileName = tfptPathAndFileName;
+	//           startInfo.Arguments = arguments;
+	//           startInfo.RedirectStandardError = true;
+	//           startInfo.RedirectStandardOutput = true;
+	//           startInfo.RedirectStandardInput = false;
 
- //           using (var process = Process.Start(startInfo))
- //           {
- //               process.Start();
- //               var output = process.StandardOutput.ReadToEnd();
- //               var error = process.StandardError.ReadToEnd();
- //           }
+	//           using (var process = Process.Start(startInfo))
+	//           {
+	//               process.Start();
+	//               var output = process.StandardOutput.ReadToEnd();
+	//               var error = process.StandardError.ReadToEnd();
+	//           }
 
- //       }
+	//       }
 
- //   }
+	//   }
 }
 

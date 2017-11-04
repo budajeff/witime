@@ -57,5 +57,10 @@ namespace WorkItemTime
 		{
 
 		}
+
+		private void _toggleButton_Click(object sender, EventArgs e)
+		{
+			this._monitor.ToggleCurrent();
+		}
 	}
 }
