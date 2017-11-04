@@ -77,7 +77,7 @@ namespace WorkItemTime
 				startInfo = new ProcessStartInfo();
 				startInfo.UseShellExecute = false;
 				startInfo.FileName = tfptPathAndFileName;
-				startInfo.Arguments = $"workitem /update /collection:{tfsCollectionName} {workItemNumber} /fields:\"{workHoursFieldName} = {currentHours:F2}\"";
+				startInfo.Arguments = $"workitem /collection:{tfsCollectionName} /update {workItemNumber} /fields:\"{workHoursFieldName}={currentHours:F1}\"";
 				startInfo.RedirectStandardError = true;
 				startInfo.RedirectStandardOutput = true;
 				startInfo.RedirectStandardInput = false;
