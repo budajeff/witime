@@ -143,8 +143,18 @@ namespace WorkItemTime
 		public const string TfsEditsComment = ActivityComment;
 		public const string TfsEditsApiOutput = "apiOutput";
 		public const string TfsEditsApiError = "apiError";
+		public const string TfsEditsStatus = "status";
+		public const string TfsEditsStatusNone = "none";
+		public const string TfsEditsStatusPending = "pending";
+		public const string TfsEditsStatusReading = "reading";
+		public const string TfsEditsStatusWriting = "writing";
+		public const string TfsEditsStatusSuccess = "success";
+		public const string TfsEditsStatusError = "error";
 
-        public void Load()
+
+
+
+		public void Load()
         {
             this.UberSet = new DataSet();
             try
@@ -190,6 +200,7 @@ namespace WorkItemTime
             //tfsEditsTable.PrimaryKey = new[] { tfsEditsTable.Columns.Add(TfsEditsWorkItem)};
 			tfsEditsTable.Columns.Add(TfsEditsDurationMinutes, typeof(Int32));
 			tfsEditsTable.Columns.Add(TfsEditsComment);
+			tfsEditsTable.Columns.Add(TfsEditsStatus);
 			tfsEditsTable.Columns.Add(TfsEditsApiOutput);
 			tfsEditsTable.Columns.Add(TfsEditsApiError);
 
@@ -252,9 +263,17 @@ namespace WorkItemTime
 
                     tfsEdit.SetField(Data.TfsEditsDurationMinutes, duration.Minutes);
                     tfsEdit.SetField(Data.TfsEditsWorkItem, previousActivity.Field<Int32?>(Data.ActivityWorkItem));
-                    tfsEdit.SetField(Data.TfsEditsComment, currentActivity.Field<string>(Data.ActivityComment));
 
-                    if(tfsEditsTable.Rows.IndexOf(tfsEdit) == -1)
+					//append comment
+	                var activityComment = currentActivity.Field<string>(Data.ActivityComment);
+	                if (!string.IsNullOrWhiteSpace(activityComment))
+	                {
+		                var tfsEditComment = tfsEdit.Field<string>(Data.TfsEditsComment) ?? "";
+		                tfsEditComment += Environment.NewLine + activityComment;
+		                tfsEdit.SetField(Data.TfsEditsComment, tfsEditComment);
+	                }
+
+					if (tfsEditsTable.Rows.IndexOf(tfsEdit) == -1)
                     {
                         tfsEditsTable.Rows.Add(tfsEdit);
                     }

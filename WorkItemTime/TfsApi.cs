@@ -24,11 +24,15 @@ namespace WorkItemTime
 		{
 			foreach (var tfsEdit in this._tfsEdits.AsEnumerable())
 			{
-				this.UpdatetWorkHours(tfsEdit);
+				tfsEdit.SetField(Data.TfsEditsStatus, Data.TfsEditsStatusPending);
+			}
+			foreach (var tfsEdit in this._tfsEdits.AsEnumerable())
+			{
+				this.WriteToTfs(tfsEdit);
 			}
 		}
 
-		public void UpdatetWorkHours(DataRow tfsEditRow)
+		public string WriteToTfs(DataRow tfsEditRow)
 		{
 			var tfptPathAndFileName = this._settings.Rows.Find(Data.SettingsTfptPathAndFileName).Field<string>(Data.SettingsTableValue);
 			var tfsCollectionName = this._settings.Rows.Find(Data.SettingsTfsCollectionName).Field<string>(Data.SettingsTableValue);
@@ -46,38 +50,52 @@ namespace WorkItemTime
 			startInfo.RedirectStandardInput = false;
 			startInfo.CreateNoWindow = true;
 
-			var standardOutput = new StringBuilder();
-			var standardError = new StringBuilder();
+			var standardOutputBuilder = new StringBuilder();
+			var standardErrorBuilder = new StringBuilder();
 
 			var tfsGetResult = "";
 			var error = "";
+			var returnText = "";
 			try
 			{
 				using (var process = Process.Start(startInfo))
 				{
 					tfsGetResult = process.StandardOutput.ReadToEnd();
-					standardOutput.AppendLine(tfsGetResult);
 					error = process.StandardError.ReadToEnd();
-					standardError.AppendLine(error);
+					standardErrorBuilder.AppendLine(error);
 					process.WaitForExit();
 				}
 				if (!string.IsNullOrWhiteSpace(error))
 				{
-					return;
+					tfsEditRow.SetField(Data.TfsEditsStatus, Data.TfsEditsStatusError);
+					return error;
 				}
-				var fields = tfsGetResult.Split(new []{Environment.NewLine }, StringSplitOptions.None);
+
+				//read current WI hours value
+				tfsEditRow.SetField(Data.TfsEditsStatus, Data.TfsEditsStatusReading);
+
+				var fields = tfsGetResult.Split(new[] {Environment.NewLine}, StringSplitOptions.None);
 				var workHoursField =
-					fields.Where(f => f.Trim().StartsWith(workHoursFieldName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault() ?? "0";
+					fields.Where(f => f.Trim().StartsWith(workHoursFieldName, StringComparison.InvariantCultureIgnoreCase))
+						.FirstOrDefault() ?? "0";
 				var workHours = workHoursField.Replace(workHoursFieldName + " = ", "").Trim();
 				var currentHours = Double.Parse(workHours);
 
-				currentHours += new TimeSpan(0,0, durationMinutes, 0).TotalHours;
+				//update WI hours w/ the amount from the current row
+				currentHours += new TimeSpan(0, 0, durationMinutes, 0).TotalHours;
+
+				//create a WI history entry for this edit based on the comment
+				var history = tfsEditRow.Field<string>(Data.TfsEditsComment) ?? "";
+				history += Environment.NewLine + Environment.NewLine + "Updated via witime";
 
 				//write the updated hours
+				tfsEditRow.SetField(Data.TfsEditsStatus, Data.TfsEditsStatusWriting);
+
 				startInfo = new ProcessStartInfo();
 				startInfo.UseShellExecute = false;
 				startInfo.FileName = tfptPathAndFileName;
-				startInfo.Arguments = $"workitem /collection:{tfsCollectionName} /update {workItemNumber} /fields:\"{workHoursFieldName}={currentHours:F1}\"";
+				startInfo.Arguments =
+					$"workitem /collection:{tfsCollectionName} /update {workItemNumber} /fields:\"{workHoursFieldName}={currentHours:F2};History={history}\"";
 				startInfo.RedirectStandardError = true;
 				startInfo.RedirectStandardOutput = true;
 				startInfo.RedirectStandardInput = false;
@@ -92,11 +110,23 @@ namespace WorkItemTime
 					process.WaitForExit();
 				}
 			}
+			catch (Exception ex)
+			{
+				standardErrorBuilder.AppendLine(ex.ToString());
+				tfsEditRow.SetField(Data.TfsEditsStatus, Data.TfsEditsStatusError);
+			}
 			finally
 			{
-				tfsEditRow.SetField(Data.TfsEditsApiOutput, standardOutput.ToString());
-				tfsEditRow.SetField(Data.TfsEditsApiError, standardError.ToString());
+				var standardOutput = standardOutputBuilder.ToString();
+				tfsEditRow.SetField(Data.TfsEditsApiOutput, standardOutput);
+				var standardError = standardErrorBuilder.ToString();
+				tfsEditRow.SetField(Data.TfsEditsApiError, standardError);
+				returnText = string.IsNullOrWhiteSpace(standardError) ? standardOutput : standardError;
+
+				tfsEditRow.SetField(Data.TfsEditsStatus, !string.IsNullOrWhiteSpace(standardError) ? Data.TfsEditsStatusError :  Data.TfsEditsStatusSuccess);
+
 			}
+			return returnText;
 		}
 
 		///// <summary>
