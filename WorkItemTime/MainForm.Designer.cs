@@ -15,18 +15,19 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
 			this._tabControl = new System.Windows.Forms.TabControl();
 			this._activityTab = new System.Windows.Forms.TabPage();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this._activityGrid = new System.Windows.Forms.DataGridView();
 			this._clearActivityLogs = new System.Windows.Forms.Button();
+			this._toggleButton = new System.Windows.Forms.Button();
 			this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
 			this._tfsEditsGrid = new System.Windows.Forms.DataGridView();
 			this._submitToTfsButton = new System.Windows.Forms.Button();
 			this._settingsTab = new System.Windows.Forms.TabPage();
 			this._settingsGrid = new System.Windows.Forms.DataGridView();
-			this._toggleButton = new System.Windows.Forms.Button();
 			this._tabControl.SuspendLayout();
 			this._activityTab.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -118,6 +119,16 @@
 			this._clearActivityLogs.Text = "Clear Activity Logs";
 			this._clearActivityLogs.UseVisualStyleBackColor = true;
 			// 
+			// _toggleButton
+			// 
+			this._toggleButton.Location = new System.Drawing.Point(3, 195);
+			this._toggleButton.Name = "_toggleButton";
+			this._toggleButton.Size = new System.Drawing.Size(106, 23);
+			this._toggleButton.TabIndex = 3;
+			this._toggleButton.Text = "Start/Stop Current";
+			this._toggleButton.UseVisualStyleBackColor = true;
+			this._toggleButton.Click += new System.EventHandler(this._toggleButton_Click);
+			// 
 			// tableLayoutPanel2
 			// 
 			this.tableLayoutPanel2.ColumnCount = 2;
@@ -177,22 +188,13 @@
 			this._settingsGrid.Size = new System.Drawing.Size(836, 443);
 			this._settingsGrid.TabIndex = 0;
 			// 
-			// _toggleButton
-			// 
-			this._toggleButton.Location = new System.Drawing.Point(3, 195);
-			this._toggleButton.Name = "_toggleButton";
-			this._toggleButton.Size = new System.Drawing.Size(106, 23);
-			this._toggleButton.TabIndex = 3;
-			this._toggleButton.Text = "Start/Stop Current";
-			this._toggleButton.UseVisualStyleBackColor = true;
-			this._toggleButton.Click += new System.EventHandler(this._toggleButton_Click);
-			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(850, 475);
 			this.Controls.Add(this._tabControl);
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "MainForm";
 			this.Text = "TFS Work Item Time Tracker";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);

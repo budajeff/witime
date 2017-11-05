@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Data;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
@@ -95,7 +96,15 @@ namespace WorkItemTime
 
 		private void _submitToTfsButton_Click(object sender, EventArgs e)
 		{
+			this._data.UberSet.Tables[Data.ActivityTableName].AsEnumerable()
+				.Where(row => row.Field<string>(Data.ActivityStatus) == Data.ActivityStatusNotSentToTfs)
+				.ForEach(row => row.SetField(Data.ActivityStatus, Data.ActivityStatusSendingToTfs));
+
 			this._tfsApi.Send();
+
+			this._data.UberSet.Tables[Data.ActivityTableName].AsEnumerable()
+				.Where(row => row.Field<string>(Data.ActivityStatus) == Data.ActivityStatusSendingToTfs)
+				.ForEach(row => row.SetField(Data.ActivityStatus, Data.ActivityStatusSentToTfs));
 		}
 
 		private void _toggleButton_Click(object sender, EventArgs e)
