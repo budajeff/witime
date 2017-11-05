@@ -127,6 +127,7 @@ namespace WorkItemTime
         public const string ActivityDescription = "description";
 		public const string ActivityComment = "comment";
         public const string ActivityStatus = "status";
+		public const string ActivityStatusDateTime = "statusDateTime";
 		public const string ActivityKind = "kind";
 		public const string ActivityWorkItem = "workitem";
         public const string ActivityStatusUnapproved = "unapproved";
@@ -181,6 +182,7 @@ namespace WorkItemTime
 			activityTable.Columns.Add(ActivityKind, typeof(string));
 			activityTable.Columns.Add(ActivityComment, typeof(string));
 			activityTable.Columns.Add(ActivityStatus, typeof(string));//approved, posting, posted
+			activityTable.Columns.Add(ActivityStatusDateTime, typeof(DateTime));
 			var wi = activityTable.Columns.Add(ActivityWorkItem, typeof(Int32));
             wi.AllowDBNull = true;
             
@@ -205,6 +207,12 @@ namespace WorkItemTime
 			tfsEditsTable.Columns.Add(TfsEditsApiError);
 
 			return dataSet;
+		}
+
+		public static void SetActivityStatus(DataRow activityRow, string status)
+		{
+			activityRow.SetField(Data.ActivityStatus, status);
+			activityRow.SetField(Data.ActivityStatusDateTime, DateTime.Now);
 		}
 
 		public void CalculateDurations(DataSet uberSet)

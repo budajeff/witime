@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace WorkItemTime
 {
@@ -42,7 +43,43 @@ namespace WorkItemTime
             this._monitor.Start();
 
 			this._tfsApi = new TfsApi(_data.UberSet);
-        }
+
+	        SystemEvents.SessionSwitch += SystemEventsOnSessionSwitch;
+
+		}
+
+		private void SystemEventsOnSessionSwitch(object sender, SessionSwitchEventArgs sessionSwitchEventArgs)
+		{
+			if (sessionSwitchEventArgs.Reason == SessionSwitchReason.SessionUnlock)
+			{
+				this.BeginInvoke(new Action(() =>
+				{
+					System.Threading.Thread.Sleep(1000);
+					//bring this app to front on windows Desktop after unlock
+					this.WindowState = FormWindowState.Minimized;
+					this.Show();
+					this.WindowState = FormWindowState.Normal;
+					this.Show();
+					this.Activate();
+					this.Focus();
+				}));
+			}
+		}
+
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && (components != null))
+			{
+				components.Dispose();
+				SystemEvents.SessionSwitch -= SystemEventsOnSessionSwitch;
+			}
+			base.Dispose(disposing);
+		}
+
 
 		private void ActivityGridOnCellEndEdit(object sender, DataGridViewCellEventArgs dataGridViewCellEventArgs)
 		{
